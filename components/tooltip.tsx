@@ -104,16 +104,6 @@ const Tooltip: React.FC<TooltipProps> = ({
               </div>
             )}
 
-            {/* Legacy duration for backward compatibility */}
-            {bookingData.length && !bookingData.start_time && (
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-gray-600">Duration:</span>
-                <span className="text-xs text-gray-800 font-medium">
-                  {bookingData.length} night(s)
-                </span>
-              </div>
-            )}
-
             {/* Status indicators */}
             <div className="flex items-center space-x-2 pt-1">
               {/* Move status */}
