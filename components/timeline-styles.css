@@ -1,0 +1,63 @@
+/* Timeline item styles to avoid CSS conflicts */
+.timeline-item-teal_500 {
+  background-color: #14b8a6 !important;
+}
+
+.timeline-item-green_500 {
+  background-color: #22c55e !important;
+}
+
+.timeline-item-green_200 {
+  background-color: #bbf7d0 !important;
+}
+
+.timeline-item-orange_400 {
+  background-color: #fb923c !important;
+}
+
+.timeline-item-orange_300 {
+  background-color: #fdba74 !important;
+}
+
+/* Default fallback */
+.timeline-item-default {
+  background-color: #6b7280 !important;
+}
+
+/* Do not move items styling */
+.timeline-item-do-not-move {
+  background-color: #9ca3af !important;
+  border: 2px dashed #6b7280 !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
+}
+
+.timeline-item-do-not-move:hover {
+  background-color: #9ca3af !important;
+  cursor: not-allowed !important;
+}
+
+/* Ensure timeline items don't have conflicting border styles */
+.rct-item {
+  border: none !important;
+}
+
+/* Custom styling for timeline items */
+.rct-item-content {
+  border-radius: 4px;
+}
+
+/* Hover effects for timeline items */
+.rct-item:hover {
+  opacity: 0.9 !important;
+  transform: scale(1.02) !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  z-index: 100 !important;
+}
+
+/* Ensure hover effects don't apply to do-not-move items */
+.timeline-item-do-not-move:hover {
+  transform: none !important;
+  box-shadow: none !important;
+} 
