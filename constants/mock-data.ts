@@ -65,18 +65,16 @@ export interface Booking {
   id: string;
   group?: string;
   title?: string;
-  start_time?: number;
-  end_time?: number;
+  start_time: number;
+  end_time: number;
   canMove?: boolean;
   canResize?: boolean;
   itemProps?: {
     style?: React.CSSProperties;
   };
   // Legacy properties for backward compatibility
-  day?: number;
   text?: string;
   color?: string;
-  length?: number;
   icons?: string[];
 }
 
@@ -348,38 +346,53 @@ const generateMockBookings = (): { [roomNumber: string]: Booking[] } => {
     Math.floor(daysInMonth * 0.8), // ~80% into month
   ].filter(day => day >= 1 && day <= daysInMonth)
 
+  const createBooking = (day: number, text: string, color: string, hours: number, icons?: string[]): Booking => {
+    const startTime = new Date(monthInfo.year, monthInfo.month, day, 14, 0, 0).getTime()
+    const endTime = new Date(monthInfo.year, monthInfo.month, day, 14 + hours, 0, 0).getTime()
+    return {
+      id: `booking-${Math.random().toString(36).substr(2, 9)}`,
+      text,
+      color,
+      start_time: startTime,
+      end_time: endTime,
+      canMove: !text.includes('Do Not Move'),
+      canResize: !text.includes('Do Not Move'),
+      icons
+    }
+  }
+
   return {
-    "101": [{ id: "booking-1", day: sampleDays[0], text: "ANDERSON, Mr John", color: "bg-teal-500", length: 1 }],
-    "102": [{ id: "booking-2", day: sampleDays[0], text: "WILLIAMS, Mrs Sarah - Do Not Move", color: "bg-green-500", length: 2 }],
+    "101": [createBooking(sampleDays[0], "ANDERSON, Mr John", "bg-teal-500", 24)],
+    "102": [createBooking(sampleDays[0], "WILLIAMS, Mrs Sarah - Do Not Move", "bg-green-500", 48)],
     "103": [],
-    "104": [{ id: "booking-21", day: sampleDays[1], text: "SMITH, Mr Robert -", color: "bg-orange-400", length: 1 }],
+    "104": [createBooking(sampleDays[1], "SMITH, Mr Robert -", "bg-orange-400", 24)],
     "201": [
-      { id: "booking-3", day: sampleDays[0], text: "JOHNSON, Ms Emily", color: "bg-green-200", length: 1 },
-      { id: "booking-4", day: sampleDays[3], text: "BROWN, Mr Michael", color: "bg-orange-400", length: 1 },
+      createBooking(sampleDays[0], "JOHNSON, Ms Emily", "bg-green-200", 24),
+      createBooking(sampleDays[3], "BROWN, Mr Michael", "bg-orange-400", 24),
     ],
-    "202": [{ id: "booking-5", day: sampleDays[3], text: "DAVIS, Mrs Jennifer", color: "bg-orange-400", length: 1 }],
-    "203": [{ id: "booking-6", day: sampleDays[0], text: "MILLER, Mr David", color: "bg-green-200", length: 1 }],
+    "202": [createBooking(sampleDays[3], "DAVIS, Mrs Jennifer", "bg-orange-400", 24)],
+    "203": [createBooking(sampleDays[0], "MILLER, Mr David", "bg-green-200", 24)],
     "204": [
-      { id: "booking-7", day: sampleDays[0], text: "WILSON, Mrs Lisa", color: "bg-orange-300", length: 1 },
-      { id: "booking-8", day: sampleDays[3], text: "MOORE, Mr Robert", color: "bg-orange-400", length: 1, icons: ["heart"] },
+      createBooking(sampleDays[0], "WILSON, Mrs Lisa", "bg-orange-300", 24),
+      createBooking(sampleDays[3], "MOORE, Mr Robert", "bg-orange-400", 24, ["heart"]),
     ],
     "205": [],
     "206": [
-      { id: "booking-9", day: sampleDays[0], text: "TAYLOR, Ms Amanda", color: "bg-green-500", length: 1 },
-      { id: "booking-10", day: sampleDays[2], text: "ANDERSON, Mrs Karen", color: "bg-orange-400", length: 1, icons: ["thumbsup", "heart"] },
-      { id: "booking-11", day: sampleDays[4], text: "THOMAS, Mr James", color: "bg-orange-400", length: 1 },
-      { id: "booking-12", day: sampleDays[5], text: "JACKSON, Ms Michelle", color: "bg-orange-400", length: 1 },
+      createBooking(sampleDays[0], "TAYLOR, Ms Amanda", "bg-green-500", 24),
+      createBooking(sampleDays[2], "ANDERSON, Mrs Karen", "bg-orange-400", 24, ["thumbsup", "heart"]),
+      createBooking(sampleDays[4], "THOMAS, Mr James", "bg-orange-400", 24),
+      createBooking(sampleDays[5], "JACKSON, Ms Michelle", "bg-orange-400", 24),
     ],
     "207": [
-      { id: "booking-13", day: sampleDays[0], text: "WHITE, Mr Christopher", color: "bg-orange-300", length: 1 },
-      { id: "booking-14", day: sampleDays[1], text: "HARRIS, Mrs Rebecca", color: "bg-orange-300", length: 1, icons: ["thumbsup"] },
-      { id: "booking-15", day: sampleDays[2], text: "MARTIN, Mr Daniel", color: "bg-orange-400", length: 1, icons: ["thumbsup", "heart"] },
-      { id: "booking-16", day: sampleDays[5], text: "THOMPSON, Ms Jessica", color: "bg-orange-400", length: 1 },
+      createBooking(sampleDays[0], "WHITE, Mr Christopher", "bg-orange-300", 24),
+      createBooking(sampleDays[1], "HARRIS, Mrs Rebecca", "bg-orange-300", 24, ["thumbsup"]),
+      createBooking(sampleDays[2], "MARTIN, Mr Daniel", "bg-orange-400", 24, ["thumbsup", "heart"]),
+      createBooking(sampleDays[5], "THOMPSON, Ms Jessica", "bg-orange-400", 24),
     ],
     "208": [
-      { id: "booking-17", day: sampleDays[1], text: "GARCIA, Mr Carlos", color: "bg-orange-300", length: 1, icons: ["thumbsup"] },
-      { id: "booking-18", day: sampleDays[2], text: "RODRIGUEZ, Mrs Maria", color: "bg-orange-400", length: 1, icons: ["thumbsup", "heart"] },
-      { id: "booking-19", day: sampleDays[5], text: "LEWIS, Mr William", color: "bg-orange-400", length: 1 },
+      createBooking(sampleDays[1], "GARCIA, Mr Carlos", "bg-orange-300", 24, ["thumbsup"]),
+      createBooking(sampleDays[2], "RODRIGUEZ, Mrs Maria", "bg-orange-400", 24, ["thumbsup", "heart"]),
+      createBooking(sampleDays[5], "LEWIS, Mr William", "bg-orange-400", 24),
     ],
   }
 }
@@ -402,11 +415,11 @@ export const MOCK_CALENDAR_DAYS: CalendarDay[] = generateCalendarDays()
 const generateOccupancyData = (): OccupancyData[] => {
   const monthInfo = getMonthInfo()
   const firstBookingDay = Math.floor(monthInfo.endDate.getDate() * 0.1)
-  const targetDate = new Date(monthInfo.year, monthInfo.month, firstBookingDay)
+  const targetDate = new Date(monthInfo.year, monthInfo.month, firstBookingDay, 14, 0, 0)
   
   return [
     {
-      date: targetDate.toISOString().split('T')[0],
+      date: targetDate.toISOString(),
       rooms: {
         "101": { isOccupied: true, guestName: "ANDERSON, Mr John", reservationId: 1001 },
         "102": { isOccupied: true, guestName: "WILLIAMS, Mrs Sarah", reservationId: 1002 },
@@ -439,59 +452,37 @@ const generateTimelineBookings = (): Booking[] => {
   const monthInfo = getMonthInfo()
   const firstBookingDay = Math.floor(monthInfo.endDate.getDate() * 0.1)
   
-  const checkInTime = new Date(monthInfo.year, monthInfo.month, firstBookingDay, 14, 0, 0)
-  const checkOutTime = new Date(monthInfo.year, monthInfo.month, firstBookingDay + 1, 12, 0, 0)
-  const checkOut2Days = new Date(monthInfo.year, monthInfo.month, firstBookingDay + 2, 12, 0, 0)
-  
-  return [
-    {
-      id: "booking-timeline-1",
-      group: "101",
-      title: "ANDERSON, Mr John",
-      start_time: checkInTime.getTime(),
-      end_time: checkOutTime.getTime(),
-      canMove: true,
-      canResize: true,
+  const createTimelineBooking = (
+    roomNumber: string,
+    guestName: string,
+    startHour: number,
+    durationHours: number,
+    canMove: boolean = true,
+    canResize: boolean = true,
+    backgroundColor: string
+  ): Booking => {
+    const startTime = new Date(monthInfo.year, monthInfo.month, firstBookingDay, startHour, 0, 0).getTime()
+    const endTime = new Date(monthInfo.year, monthInfo.month, firstBookingDay, startHour + durationHours, 0, 0).getTime()
+    
+    return {
+      id: `booking-timeline-${Math.random().toString(36).substr(2, 9)}`,
+      group: roomNumber,
+      title: guestName,
+      start_time: startTime,
+      end_time: endTime,
+      canMove,
+      canResize,
       itemProps: {
-        style: { backgroundColor: "#14b8a6" }
-      }
-    },
-    {
-      id: "booking-timeline-2",
-      group: "102",
-      title: "WILLIAMS, Mrs Sarah - Do Not Move",
-      start_time: checkInTime.getTime(),
-      end_time: checkOut2Days.getTime(),
-      canMove: false,
-      canResize: false,
-      itemProps: {
-        style: { backgroundColor: "#22c55e" }
-      }
-    },
-    {
-      id: "booking-timeline-3",
-      group: "201",
-      title: "JOHNSON, Ms Emily",
-      start_time: checkInTime.getTime(),
-      end_time: checkOutTime.getTime(),
-      canMove: true,
-      canResize: true,
-      itemProps: {
-        style: { backgroundColor: "#bbf7d0" }
-      }
-    },
-    {
-      id: "booking-timeline-4",
-      group: "206",
-      title: "TAYLOR, Ms Amanda",
-      start_time: checkInTime.getTime(),
-      end_time: checkOutTime.getTime(),
-      canMove: true,
-      canResize: true,
-      itemProps: {
-        style: { backgroundColor: "#22c55e" }
+        style: { backgroundColor }
       }
     }
+  }
+
+  return [
+    createTimelineBooking("101", "ANDERSON, Mr John", 14, 24, true, true, "#14b8a6"),
+    createTimelineBooking("102", "WILLIAMS, Mrs Sarah - Do Not Move", 14, 48, false, false, "#22c55e"),
+    createTimelineBooking("201", "JOHNSON, Ms Emily", 14, 24, true, true, "#bbf7d0"),
+    createTimelineBooking("206", "TAYLOR, Ms Amanda", 14, 24, true, true, "#22c55e")
   ]
 }
 

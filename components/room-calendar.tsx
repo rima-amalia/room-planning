@@ -29,6 +29,8 @@ interface TimelineGroup {
   rightTitle?: string;
   stackItems?: boolean;
   height?: number;
+  roomType?: string;
+  roomStatus?: string;
 }
 
 interface TimelineItem {
@@ -52,7 +54,7 @@ interface TimelineItem {
 // New Booking Form Modal Component
 interface NewBookingModalProps {
   isOpen: boolean;
-  onConfirm: (guestName: string, nights: number) => void;
+  onConfirm: (guestName: string, hours: number) => void;
   onCancel: () => void;
   roomNumber: string;
   startDate: string;
@@ -66,20 +68,20 @@ const NewBookingModal: React.FC<NewBookingModalProps> = ({
   startDate,
 }) => {
   const [guestName, setGuestName] = useState("");
-  const [nights, setNights] = useState(1);
+  const [hours, setHours] = useState(1);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (guestName.trim()) {
-      onConfirm(guestName.trim(), nights);
+      onConfirm(guestName.trim(), hours);
       setGuestName("");
-      setNights(1);
+      setHours(1);
     }
   };
 
   const handleCancel = () => {
     setGuestName("");
-    setNights(1);
+    setHours(1);
     onCancel();
   };
 
@@ -116,17 +118,17 @@ const NewBookingModal: React.FC<NewBookingModalProps> = ({
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Nights
+              Number of Hours
             </label>
             <input
               type="number"
-              value={nights}
+              value={hours}
               onChange={(e) =>
-                setNights(Math.max(1, parseInt(e.target.value) || 1))
+                setHours(Math.max(1, parseInt(e.target.value) || 1))
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
-              max="30"
+              max="24"
             />
           </div>
 
@@ -193,6 +195,40 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
+// Room Type Tooltip Component
+interface RoomTypeTooltipProps {
+  isVisible: boolean;
+  position: { x: number; y: number };
+  roomType: string;
+  roomStatus: string;
+}
+
+const RoomTypeTooltip: React.FC<RoomTypeTooltipProps> = ({
+  isVisible,
+  position,
+  roomType,
+  roomStatus,
+}) => {
+  if (!isVisible) return null;
+
+  return (
+    <div
+      className="fixed z-[10000] bg-white shadow-lg rounded-lg p-3 text-sm"
+      style={{
+        left: position.x + 10,
+        top: position.y + 10,
+        minWidth: "200px",
+      }}
+    >
+      <div className="font-medium mb-1">Room Information</div>
+      <div className="text-gray-600">
+        <div>Type: {roomType}</div>
+        <div>Status: {roomStatus}</div>
+      </div>
+    </div>
+  );
+};
+
 export default function RoomCalendar() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [days, setDays] = useState<CalendarDay[]>([]);
@@ -231,6 +267,19 @@ export default function RoomCalendar() {
     roomNumber: "",
     date: "",
     bookingData: null,
+  });
+
+  // Room type tooltip state
+  const [roomTypeTooltip, setRoomTypeTooltip] = useState<{
+    isVisible: boolean;
+    position: { x: number; y: number };
+    roomType: string;
+    roomStatus: string;
+  }>({
+    isVisible: false,
+    position: { x: 0, y: 0 },
+    roomType: "",
+    roomStatus: "",
   });
 
   useEffect(() => {
@@ -295,34 +344,18 @@ export default function RoomCalendar() {
       rightTitle: getStatusText(room.status),
       stackItems: false,
       height: 50,
+      roomType: room.type,
+      roomStatus: room.status,
     }));
 
     // Create items from bookings
     const timelineItems: TimelineItem[] = [];
 
-    // Get current month info for dynamic date handling
-    const monthInfo = getMonthInfo();
-
     rooms.forEach((room) => {
       room.bookings.forEach((booking) => {
-        // Skip bookings without required legacy properties
-        if (!booking.day || !booking.text || !booking.color || !booking.length)
+        // Skip bookings without required properties
+        if (!booking.start_time || !booking.end_time || !booking.text || !booking.color)
           return;
-
-        // Find the corresponding day info
-        const dayInfo = days.find((d) => d.date === booking.day);
-        if (!dayInfo) return;
-
-        // Create start and end times based on the dynamic month
-        const startTime = moment(
-          `${monthInfo.year}-${(monthInfo.month + 1)
-            .toString()
-            .padStart(2, "0")}-${booking.day
-            .toString()
-            .padStart(2, "0")} 00:00`,
-          "YYYY-MM-DD HH:mm"
-        );
-        const endTime = startTime.clone().add(booking.length, "days");
 
         const colorClass = booking.color.replace("bg-", "");
         const className = [
@@ -347,8 +380,8 @@ export default function RoomCalendar() {
                 }`
               : ""
           }${isDoNotMove ? " ➖" : ""}`,
-          start_time: startTime.valueOf(),
-          end_time: endTime.valueOf(),
+          start_time: booking.start_time,
+          end_time: booking.end_time,
           canMove: !isDoNotMove,
           canResize: !isDoNotMove ? "both" : false,
           canChangeGroup: !isDoNotMove,
@@ -360,7 +393,7 @@ export default function RoomCalendar() {
             },
             "data-custom-attribute": `${booking.id}|${
               room.number
-            }|${startTime.format("YYYY-MM-DD")}`,
+            }|${moment(booking.start_time).format("YYYY-MM-DD")}`,
           },
         });
       });
@@ -369,6 +402,25 @@ export default function RoomCalendar() {
     setGroups(timelineGroups);
     setItems(timelineItems);
   }, [rooms, days]);
+
+  // Add handlers for Timeline events
+  const handleGroupMouseEnter = (groupId: string, e: React.MouseEvent) => {
+    console.log('Group mouse enter:', groupId);
+    const room = rooms.find(r => r.number === groupId);
+    if (room) {
+      setRoomTypeTooltip({
+        isVisible: true,
+        position: { x: e.clientX, y: e.clientY },
+        roomType: room.type,
+        roomStatus: room.status,
+      });
+    }
+  };
+
+  const handleGroupMouseLeave = () => {
+    console.log('Group mouse leave');
+    setRoomTypeTooltip(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Add DOM event listeners for tooltip
   useEffect(() => {
@@ -484,14 +536,10 @@ export default function RoomCalendar() {
       bookings: room.bookings
         .map((booking) => {
           if (booking.id === itemId) {
-            const startMoment = moment(dragTime);
-            const day = startMoment.date();
-            const length =
-              moment(dragTime + duration).diff(startMoment, "days") || 1;
             return {
               ...booking,
-              day,
-              length,
+              start_time: dragTime,
+              end_time: dragTime + duration,
             };
           }
           return booking;
@@ -523,14 +571,10 @@ export default function RoomCalendar() {
       if (newRoomIndex !== -1) {
         const originalBooking = oldRoom.bookings.find((b) => b.id === itemId);
         if (originalBooking) {
-          const startMoment = moment(dragTime);
-          const day = startMoment.date();
-          const length =
-            moment(dragTime + duration).diff(startMoment, "days") || 1;
           updatedRooms[newRoomIndex].bookings.push({
             ...originalBooking,
-            day,
-            length,
+            start_time: dragTime,
+            end_time: dragTime + duration,
           });
         }
       }
@@ -585,14 +629,10 @@ export default function RoomCalendar() {
       ...room,
       bookings: room.bookings.map((booking) => {
         if (booking.id === itemId) {
-          const startMoment = moment(newStartTime);
-          const endMoment = moment(newEndTime);
-          const day = startMoment.date();
-          const length = endMoment.diff(startMoment, "days") || 1;
           return {
             ...booking,
-            day,
-            length,
+            start_time: newStartTime,
+            end_time: newEndTime
           };
         }
         return booking;
@@ -643,11 +683,11 @@ export default function RoomCalendar() {
   };
 
   // Handle new booking confirmation
-  const handleNewBookingConfirm = (guestName: string, nights: number) => {
+  const handleNewBookingConfirm = (guestName: string, hours: number) => {
     if (!newBookingData) return;
 
-    const startTime = moment(newBookingData.startTime).startOf("day");
-    const endTime = startTime.clone().add(nights, "days");
+    const startTime = moment(newBookingData.startTime).startOf("hour");
+    const endTime = startTime.clone().add(hours, "hours");
 
     // Check for conflicts with the new booking duration
     const hasConflictWithDuration = items.some(
@@ -663,7 +703,7 @@ export default function RoomCalendar() {
 
     if (hasConflictWithDuration) {
       alert(
-        "Cannot create reservation: There is already a booking that conflicts with the selected dates."
+        "Cannot create reservation: There is already a booking that conflicts with the selected time."
       );
       return;
     }
@@ -679,7 +719,7 @@ export default function RoomCalendar() {
       start_time: startTime.valueOf(),
       end_time: endTime.valueOf(),
       canMove: true,
-      canResize: "both",
+      canResize: true,
       canChangeGroup: true,
       itemProps: {
         className: "timeline-item-teal_500",
@@ -706,10 +746,12 @@ export default function RoomCalendar() {
               ...room.bookings,
               {
                 id: newId,
-                day: startTime.date(),
                 text: guestName,
                 color: "bg-teal-500",
-                length: nights,
+                start_time: startTime.valueOf(),
+                end_time: endTime.valueOf(),
+                canMove: true,
+                canResize: true
               },
             ],
           };
@@ -852,11 +894,21 @@ export default function RoomCalendar() {
           lineHeight={50}
           onItemMove={handleItemMove}
           onItemResize={handleItemResize}
-          dragSnap={24 * 60 * 60 * 1000} // Snap to days
+          dragSnap={60 * 60 * 1000}
           minResizeWidth={20}
           buffer={1}
           onCanvasClick={handleCanvasClick}
           onItemClick={handleItemClick}
+          groupRenderer={({ group }) => (
+            <div 
+              className="rct-sidebar-row-content"
+              data-group-id={group.id}
+              onMouseEnter={(e) => handleGroupMouseEnter(group.id, e)}
+              onMouseLeave={handleGroupMouseLeave}
+            >
+              {group.title}
+            </div>
+          )}
         />
       </div>
 
@@ -888,6 +940,15 @@ export default function RoomCalendar() {
           date={tooltip.date}
           occupancyData={occupancyData}
           bookingData={tooltip.bookingData}
+        />
+      )}
+
+      {roomTypeTooltip.isVisible && (
+        <RoomTypeTooltip
+          isVisible={roomTypeTooltip.isVisible}
+          position={roomTypeTooltip.position}
+          roomType={roomTypeTooltip.roomType}
+          roomStatus={roomTypeTooltip.roomStatus}
         />
       )}
 
